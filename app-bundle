@@ -1,0 +1,76 @@
+#!/bin/bash
+
+set -euo pipefail
+IFS=$'\t\n'
+
+function usage() {
+    echo "app-bundle <path to .app> <path to executable>"
+}
+
+if [ $# -lt 2 ] || [ $# -gt 2 ]
+then
+    usage
+    exit 1
+fi
+
+path_to_app="${1}"
+path_to_executable="${2}"
+
+if [ -d $path_to_app ]
+then
+    echo "${path_to_app} already exists"
+    exit 1
+fi
+
+if [ ! -f $path_to_executable ]
+then
+    echo "${path_to_executable} doesn't exist"
+    exit 1
+fi
+
+executable_name="$(basename $path_to_executable)"
+bundle_name="$(basename $path_to_app | sed -E 's/^(.+)\.app/\1/')"
+bundle_identifier="uk.co.tombooth.${bundle_name}"
+
+mkdir -p $path_to_app/Contents/MacOS
+
+cp $path_to_executable $path_to_app/Contents/MacOS/$executable_name
+
+cat > $path_to_app/Contents/Info.plist <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+        <key>BuildMachineOSBuild</key>
+        <string>15E65</string>
+        <key>CFBundleDevelopmentRegion</key>
+        <string>en</string>
+        <key>CFBundleExecutable</key>
+        <string>${executable_name}</string>
+        <key>CFBundleIdentifier</key>
+        <string>${bundle_identifier}</string>
+        <key>CFBundleInfoDictionaryVersion</key>
+        <string>6.0</string>
+        <key>CFBundleName</key>
+        <string>${bundle_name}</string>
+        <key>CFBundlePackageType</key>
+        <string>APPL</string>
+        <key>CFBundleShortVersionString</key>
+        <string>1.0</string>
+        <key>CFBundleSignature</key>
+        <string>????</string>
+        <key>CFBundleSupportedPlatforms</key>
+        <array>
+                <string>MacOSX</string>
+        </array>
+        <key>CFBundleVersion</key>
+        <string>1</string>
+        <key>LSMinimumSystemVersion</key>
+        <string>10.11</string>
+        <key>NSHumanReadableCopyright</key>
+        <string>Copyright © 2016 Tom Booth. All rights reserved.</string>
+        <key>NSPrincipalClass</key>
+        <string>NSApplication</string>
+</dict>
+</plist>
+EOF
